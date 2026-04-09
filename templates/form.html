@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-3">{{ '신규 등록' if mode == 'new' else '데이터 수정' }}</h5>
+
+    <form method="post" class="row g-2">
+      {% if mode == 'edit' %}
+        <input type="hidden" name="saup_code" value="{{ row['SaupCode'] }}">
+        <input type="hidden" name="seq_no" value="{{ row['SeqNo'] }}">
+      {% endif %}
+
+      {% set fields = [
+        'SaupCode','SeqNo','GongJung','inDate','LineCode','GongNo','BoxNo','ToolCode',
+        'ProdSpec','TNum','CodeNo','Install','CGubun','Qty','GaGongQty','Worker',
+        'EndGu','BiGo','EntryId','EntryDate'
+      ] %}
+
+      {% for field in fields %}
+        <div class="col-md-3">
+          <label class="form-label small">{{ field }}</label>
+          <input
+            class="form-control form-control-sm"
+            name="{{ field }}"
+            value="{{ row[field] if row and row[field] is not none else '' }}"
+            {% if mode == 'edit' and field in ['SaupCode', 'SeqNo'] %}readonly{% endif %}
+            {% if mode == 'new' and field in ['SaupCode', 'SeqNo'] %}required{% endif %}
+            placeholder="{{ 'YYYY-MM-DD HH:MM:SS' if field == 'EntryDate' else '' }}"
+          >
+        </div>
+      {% endfor %}
+
+      <div class="col-12 d-flex gap-2 mt-3">
+        <button class="btn btn-dark btn-sm" type="submit">저장</button>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">목록</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

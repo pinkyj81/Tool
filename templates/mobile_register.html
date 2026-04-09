@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tool 모바일 등록</title>
+  <style>
+    :root {
+      --bg: #f2f5f7;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #d8dee5;
+      --brand: #0b3c5d;
+      --brand-2: #145374;
+      --ok: #166534;
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+      background: linear-gradient(180deg, #e9eff4 0%, var(--bg) 35%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 14px 12px 110px;
+    }
+
+    .head {
+      margin-bottom: 10px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .desc {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 5px 20px rgba(11, 60, 93, 0.06);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    .inline-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .scan-btn {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--brand);
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    input, textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--brand-2);
+      box-shadow: 0 0 0 3px rgba(20, 83, 116, 0.16);
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .flash {
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .flash.success {
+      background: #dcfce7;
+      color: var(--ok);
+      border: 1px solid #86efac;
+    }
+
+    .flash.danger {
+      background: #fee2e2;
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .go-list {
+      text-decoration: none;
+      color: var(--brand);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .save-btn {
+      border: none;
+      border-radius: 10px;
+      min-height: 44px;
+      padding: 0 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+    }
+
+    .scan-layer {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.84);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .scan-layer.show {
+      display: flex;
+    }
+
+    .scan-box {
+      width: min(92vw, 520px);
+      background: #0f172a;
+      border-radius: 14px;
+      border: 1px solid #334155;
+      padding: 10px;
+      color: #e2e8f0;
+    }
+
+    .scan-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .scan-close {
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #f8fafc;
+      border-radius: 8px;
+      min-height: 34px;
+      padding: 0 10px;
+      font-weight: 700;
+    }
+
+    .scan-video-wrap {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      background: #000;
+      aspect-ratio: 3 / 4;
+    }
+
+    #scanVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #scanCanvas {
+      display: none;
+    }
+
+    .scan-note {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+    }
+
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <form method="post" id="mobileForm">
+    <div class="wrap">
+      <header class="head">
+        <h1 class="title">Tool 등록</h1>
+        <div class="desc">모바일 입력 전용 화면입니다. 필요한 항목만 빠르게 저장하세요.</div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <section class="card">
+        <div class="grid">
+          <div class="field">
+            <label for="inDate">inDate</label>
+            <input id="inDate" name="inDate" type="date" value="{{ initial.inDate }}" required>
+          </div>
+          <div class="field">
+            <label for="Worker">Worker</label>
+            <select id="Worker" name="Worker">
+              <option value="">선택</option>
+              {% for option in worker_options %}
+                <option value="{{ option }}" {% if initial.Worker == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="LineCode">LineCode</label>
+            <input id="LineCode" name="LineCode" placeholder="예: L006">
+          </div>
+          <div class="field">
+            <label for="ToolCode">ToolCode</label>
+            <div class="inline-row">
+              <input id="ToolCode" name="ToolCode" placeholder="예: T-1234">
+              <button class="scan-btn" type="button" id="openScanBtn">QR 스캔</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="Install">Install</label>
+            <select id="Install" name="Install">
+              <option value="">선택</option>
+              {% for option in install_options %}
+                <option value="{{ option }}" {% if initial.Install == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="GongJung">GongJung</label>
+            <input id="GongJung" name="GongJung" placeholder="예: 7">
+          </div>
+          <div class="field">
+            <label for="Qty">Qty</label>
+            <input id="Qty" name="Qty" inputmode="numeric" placeholder="예: 120">
+          </div>
+          <div class="field">
+            <label for="GaGongQty">GaGongQty</label>
+            <input id="GaGongQty" name="GaGongQty" inputmode="numeric" placeholder="예: 118">
+          </div>
+          <div class="field full">
+            <label for="BiGo">BiGo</label>
+            <textarea id="BiGo" name="BiGo" placeholder="예: 교체 후 정상"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="SaupCode">SaupCode</label>
+            <input id="SaupCode" name="SaupCode" value="{{ initial.SaupCode }}">
+          </div>
+          <div class="field">
+            <label for="EntryId">EntryId</label>
+            <input id="EntryId" name="EntryId" value="{{ initial.EntryId }}">
+          </div>
+          <div class="field">
+            <label for="GongNo">GongNo</label>
+            <input id="GongNo" name="GongNo" placeholder="예: 10">
+          </div>
+          <div class="field">
+            <label for="BoxNo">BoxNo</label>
+            <input id="BoxNo" name="BoxNo" placeholder="예: B01">
+          </div>
+          <div class="field">
+            <label for="ProdSpec">ProdSpec</label>
+            <input id="ProdSpec" name="ProdSpec" placeholder="예: Ø8.63 PCD REAMER">
+          </div>
+          <div class="field">
+            <label for="TNum">TNum</label>
+            <input id="TNum" name="TNum" placeholder="예: T5">
+          </div>
+          <div class="field">
+            <label for="CodeNo">CodeNo</label>
+            <input id="CodeNo" name="CodeNo" placeholder="예: C-MOP10">
+          </div>
+          <div class="field">
+            <label for="CGubun">CGubun</label>
+            <input id="CGubun" name="CGubun" placeholder="예: 20
+">
+          </div>
+          <div class="field">
+            <label for="EndGu">EndGu</label>
+            <input id="EndGu" name="EndGu" placeholder="예: 1">
+          </div>
+        </div>
+        <p class="muted">SeqNo, EntryDate는 저장 시 자동 생성됩니다.</p>
+      </section>
+    </div>
+
+    <div class="bottom-bar">
+      <a class="go-list" href="{{ url_for('index') }}">목록 보기</a>
+      <button class="save-btn" type="submit">저장</button>
+    </div>
+  </form>
+
+  <div class="scan-layer" id="scanLayer" aria-hidden="true">
+    <div class="scan-box">
+      <div class="scan-head">
+        <strong>툴 QR 스캔</strong>
+        <button class="scan-close" type="button" id="closeScanBtn">닫기</button>
+      </div>
+      <div class="scan-video-wrap">
+        <video id="scanVideo" playsinline></video>
+      </div>
+      <canvas id="scanCanvas"></canvas>
+      <div class="scan-note" id="scanStatus">카메라 권한을 허용한 뒤 QR을 화면 중앙에 맞춰주세요.</div>
+    </div>
+  </div>
+
+  <script>
+    const toolCodeInput = document.getElementById('ToolCode');
+    const installSelect = document.getElementById('Install');
+    const openScanBtn = document.getElementById('openScanBtn');
+    const closeScanBtn = document.getElementById('closeScanBtn');
+    const scanLayer = document.getElementById('scanLayer');
+    const scanVideo = document.getElementById('scanVideo');
+    const scanCanvas = document.getElementById('scanCanvas');
+    const scanStatus = document.getElementById('scanStatus');
+
+    let streamRef = null;
+    let rafId = 0;
+    let detector = null;
+    let installFetchTimer = 0;
+
+    function setInstallOptions(options, keepValue) {
+      const current = keepValue || '';
+      installSelect.innerHTML = '';
+
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = '선택';
+      installSelect.appendChild(emptyOpt);
+
+      options.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        installSelect.appendChild(opt);
+      });
+
+      if (current && options.includes(current)) {
+        installSelect.value = current;
+      }
+    }
+
+    async function refreshInstallOptions() {
+      const toolCode = (toolCodeInput.value || '').trim();
+      const keepValue = installSelect.value || '';
+
+      try {
+        const response = await fetch(`/api/install-options?tool_code=${encodeURIComponent(toolCode)}`);
+        const payload = await response.json();
+        if (!payload.success) {
+          return;
+        }
+        setInstallOptions(payload.options || [], keepValue);
+      } catch (error) {
+        // Ignore temporary network errors on mobile typing.
+      }
+    }
+
+    toolCodeInput.addEventListener('input', () => {
+      if (installFetchTimer) {
+        window.clearTimeout(installFetchTimer);
+      }
+      installFetchTimer = window.setTimeout(refreshInstallOptions, 250);
+    });
+    toolCodeInput.addEventListener('blur', refreshInstallOptions);
+
+    function stopScanner() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      if (streamRef) {
+        streamRef.getTracks().forEach((track) => track.stop());
+        streamRef = null;
+      }
+      scanVideo.srcObject = null;
+      scanLayer.classList.remove('show');
+      scanLayer.setAttribute('aria-hidden', 'true');
+    }
+
+    async function detectLoop() {
+      if (!detector || !streamRef) {
+        return;
+      }
+
+      if (scanVideo.readyState >= 2) {
+        const width = scanVideo.videoWidth;
+        const height = scanVideo.videoHeight;
+        if (width > 0 && height > 0) {
+          scanCanvas.width = width;
+          scanCanvas.height = height;
+          const ctx = scanCanvas.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(scanVideo, 0, 0, width, height);
+          try {
+            const barcodes = await detector.detect(scanCanvas);
+            if (barcodes && barcodes.length > 0) {
+              const text = (barcodes[0].rawValue || '').trim();
+              if (text) {
+                toolCodeInput.value = text;
+                scanStatus.textContent = '스캔 완료';
+                stopScanner();
+                toolCodeInput.focus();
+                return;
+              }
+            }
+          } catch (error) {
+            scanStatus.textContent = '스캔 중 오류가 발생했습니다.';
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(detectLoop);
+    }
+
+    async function startScanner() {
+      if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        alert('카메라 스캔은 HTTPS 또는 localhost 환경에서만 동작합니다.');
+        return;
+      }
+
+      if (!('BarcodeDetector' in window)) {
+        alert('이 브라우저는 QR 스캔을 지원하지 않습니다. 크롬 최신 버전을 사용해 주세요.');
+        return;
+      }
+
+      detector = new BarcodeDetector({ formats: ['qr_code'] });
+      scanLayer.classList.add('show');
+      scanLayer.setAttribute('aria-hidden', 'false');
+      scanStatus.textContent = '카메라를 준비 중입니다...';
+
+      try {
+        streamRef = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        scanVideo.srcObject = streamRef;
+        await scanVideo.play();
+        scanStatus.textContent = 'QR을 화면 중앙에 맞춰주세요.';
+        rafId = requestAnimationFrame(detectLoop);
+      } catch (error) {
+        scanStatus.textContent = '카메라를 열 수 없습니다. 권한을 확인해 주세요.';
+      }
+    }
+
+    openScanBtn.addEventListener('click', startScanner);
+    closeScanBtn.addEventListener('click', stopScanner);
+    scanLayer.addEventListener('click', (event) => {
+      if (event.target === scanLayer) {
+        stopScanner();
+      }
+    });
+    window.addEventListener('beforeunload', stopScanner);
+  </script>
+</body>
+</html>
