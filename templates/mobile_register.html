@@ -393,6 +393,9 @@
     </div>
   </div>
 
+  <input id="qrImageInput" type="file" accept="image/*" capture="environment" style="display:none;">
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const toolCodeInput = document.getElementById('ToolCode');
     const installSelect = document.getElementById('Install');
@@ -402,6 +405,7 @@
     const scanVideo = document.getElementById('scanVideo');
     const scanCanvas = document.getElementById('scanCanvas');
     const scanStatus = document.getElementById('scanStatus');
+    const qrImageInput = document.getElementById('qrImageInput');
 
     let streamRef = null;
     let rafId = 0;
@@ -467,6 +471,49 @@
       scanLayer.setAttribute('aria-hidden', 'true');
     }
 
+    function applyScannedToolCode(text) {
+      const value = (text || '').trim();
+      if (!value) {
+        return false;
+      }
+      toolCodeInput.value = value;
+      toolCodeInput.focus();
+      refreshInstallOptions();
+      return true;
+    }
+
+    function readQrFromImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const ctx = scanCanvas.getContext('2d', { willReadFrequently: true });
+            scanCanvas.width = img.width;
+            scanCanvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+            const qr = window.jsQR ? window.jsQR(imageData.data, imageData.width, imageData.height) : null;
+            if (qr && qr.data) {
+              resolve(qr.data);
+            } else {
+              reject(new Error('QR_NOT_FOUND'));
+            }
+          };
+          img.onerror = () => reject(new Error('IMAGE_LOAD_FAIL'));
+          img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error('FILE_READ_FAIL'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function openCameraCaptureFallback() {
+      scanStatus.textContent = '사진 촬영으로 QR을 읽습니다.';
+      qrImageInput.value = '';
+      qrImageInput.click();
+    }
+
     async function detectLoop() {
       if (!detector || !streamRef) {
         return;
@@ -484,11 +531,9 @@
             const barcodes = await detector.detect(scanCanvas);
             if (barcodes && barcodes.length > 0) {
               const text = (barcodes[0].rawValue || '').trim();
-              if (text) {
-                toolCodeInput.value = text;
+              if (applyScannedToolCode(text)) {
                 scanStatus.textContent = '스캔 완료';
                 stopScanner();
-                toolCodeInput.focus();
                 return;
               }
             }
@@ -502,13 +547,15 @@
     }
 
     async function startScanner() {
-      if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (!window.isSecureContext && !isLocal) {
         alert('카메라 스캔은 HTTPS 또는 localhost 환경에서만 동작합니다.');
         return;
       }
 
       if (!('BarcodeDetector' in window)) {
-        alert('이 브라우저는 QR 스캔을 지원하지 않습니다. 크롬 최신 버전을 사용해 주세요.');
+        // Safari/in-app browsers often miss BarcodeDetector.
+        openCameraCaptureFallback();
         return;
       }
 
@@ -539,6 +586,22 @@
       }
     });
     window.addEventListener('beforeunload', stopScanner);
+
+    qrImageInput.addEventListener('change', async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        return;
+      }
+      try {
+        const text = await readQrFromImageFile(file);
+        if (applyScannedToolCode(text)) {
+          alert('QR 인식 완료');
+          return;
+        }
+      } catch (error) {
+        alert('QR을 읽지 못했습니다. QR이 선명하게 보이도록 다시 촬영해 주세요.');
+      }
+    });
   </script>
 </body>
 </html>
